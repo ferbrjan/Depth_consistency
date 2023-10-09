@@ -9,3 +9,4 @@ EXPERIMENT 1
 5. Run test_data.py to save a .npy file that can be visualized
 
 EXPERIMENT 2
+1. tbd
