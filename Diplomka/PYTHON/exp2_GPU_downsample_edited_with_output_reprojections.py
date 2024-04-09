@@ -8,9 +8,9 @@ import numpy as np
 import numpy.matlib
 import math
 import mat73
-from scipy.interpolate import griddata
 import os
 import torch.nn as nn
+import argparse
 
 NUMBER_OF_IMAGES = 3
 ORIG_WIDTH = 1920
@@ -18,6 +18,16 @@ ORIG_HEIGHT = 1440
 DOWNSAMPLE_COEF=3
 NEW_WIDTH = int(ORIG_WIDTH/DOWNSAMPLE_COEF)
 NEW_HEIGHT = int(ORIG_HEIGHT/DOWNSAMPLE_COEF)
+
+parser = argparse.ArgumentParser(description="Conv_apporach")
+
+# Adding arguments
+parser.add_argument("data_path", type=str, help="Input path for the data")
+parser.add_argument("k_path", type=str, help="Input path for the file with matrix K")
+parser.add_argument("PATH", type=str, help="Output path for the model")
+
+# Parse the arguments
+args = parser.parse_args()
 
 def interpolate(grids, offsets):
     b, c, h, w = grids.shape
@@ -143,9 +153,9 @@ class ModifiedCNN(nn.Module):
         return x
 
 # Read mat files
-RGBDDs, extrinsics = load_data('Exp2_data/3_images_solo_2', NUMBER_OF_IMAGES)
+RGBDDs, extrinsics = load_data(args.data_path, NUMBER_OF_IMAGES)
 #Camera intrinsics
-data = mat73.loadmat('Exp2_data/3_images/00120_K.mat')
+data = mat73.loadmat(args.k_path)
 K = data['K']
 K = K/DOWNSAMPLE_COEF
 K[2,2] = 1
@@ -289,13 +299,13 @@ for epoch in range(num_epochs):
 print('Finished Training')
 
 plt.plot(losses)
-plt.savefig('foo.pdf')
+plt.savefig('graph.pdf')
 
 
 
 # Save network
-PATH = 'model_single_frame_120_downsample_edited_withself_more_repros_2500iters_1090.pth' #0604 before
-torch.save(net.state_dict(), PATH)
+#PATH = 'model_single_frame_120_downsample_edited_withself_more_repros_2500iters_1090.pth' #0604 before
+torch.save(net.state_dict(), args.PATH)
 
 
 
