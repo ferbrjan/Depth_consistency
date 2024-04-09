@@ -10,6 +10,17 @@ PIXEL-WISE APPROACH
 
 CONVOLUTIONAL APPROACH
 1. run generate_data_exp2_V2.m -> this script generates xxx_RGBD.mat, xxx_cam_params.mat and xxx_K.mat (be sure to set all the variables on the first 25 lines)
-2. For training, generate all required data, and run exp2_GPU_downsample_edited_with_output_reprojections.py 
-3. To validate run test2_edited.py with the saved model in .pth format
-4. To analyze generated .npy files run analyze_results.py
+   
+3. For training, generate all required data, and run exp2_GPU_downsample_edited_with_output_reprojections.py with arguments data_path, k_path, output_path where data folder needs to be structured as:
+
+-Folder
+--Camera_extrinsics
+---xxx_cam_params.mat
+---...
+--Image_data
+---xxx_RGBD.mat
+---...
+   
+4. To validate run test2_edited.py with the saved model in .pth format
+   
+6. To analyze generated .npy files run analyze_results.py
