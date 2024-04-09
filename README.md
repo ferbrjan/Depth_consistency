@@ -9,4 +9,7 @@ EXPERIMENT 1
 5. Run test_data.py to save a .npy file that can be visualized
 
 EXPERIMENT 2
-1. tbd
+1. run generate_data_exp2_V2.m -> Set all the variables on the first 25 lines - this script generates xxx_RGBD.mat, xxx_cam_params.mat and xxx_K.mat
+2. For training, generate all required data, and run exp2_GPU_downsample_edited_with_output_reprojections.py 
+3. To validate run test2_edited.py with the saved model in .pth format
+4. To analyze generated .npy files run analyze_results.py
