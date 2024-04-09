@@ -13,13 +13,17 @@ CONVOLUTIONAL APPROACH
    
 3. For training, generate all required data, and run exp2_GPU_downsample_edited_with_output_reprojections.py with arguments data_path, k_path, output_path where data folder needs to be structured as:
 
--Folder
---Camera_extrinsics
----xxx_cam_params.mat
----...
---Image_data
----xxx_RGBD.mat
----...
+.
+├── ...
+├── data                 
+│   ├── Camera_extrinsics   
+│   │   ├── xxx_RGBD.mat
+│   │   └── ...
+│   └── Image_data  
+│       ├── xxx_cam_params.mat
+│       └── ...
+│                 
+└── ...
    
 4. To validate run test2_edited.py with the saved model in .pth format
    
