@@ -20,7 +20,7 @@ class Net(nn.Module):
         return x
 
 # Read the .mat file
-mat2 = scipy.io.loadmat('00180_data.mat')
+mat2 = scipy.io.loadmat('00020_test.mat')
 
 test_means = mat2["means"][0]
 test_means = torch.from_numpy(test_means).float()
