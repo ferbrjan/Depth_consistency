@@ -30,7 +30,7 @@ test_inputs = mat2["softmax_out"]
 test_inputs = torch.from_numpy(test_inputs).float()
 
 net = Net(256, 128, 2)
-PATH = './v2_net.pth'
+PATH = 'pixel_wise_pretrained.pth'
 net.load_state_dict(torch.load(PATH))
 
 test_outputs = net(test_inputs)
