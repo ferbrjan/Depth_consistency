@@ -98,7 +98,7 @@ def load_data(dir,num_images=3):
     print("Loading complete")
     return RGBDDs, extrinsics
 
-RGBDDs, extrinsics = load_data('Exp2_data/3_images_solo', NUMBER_OF_IMAGES)
+RGBDDs, extrinsics = load_data('Exp2_data/test_012', NUMBER_OF_IMAGES)
 
 for i in range(len(RGBDDs)):
     orig = RGBDDs[i]
@@ -113,9 +113,9 @@ for i in range(len(RGBDDs)):
 
     RGBDDs[i] = image_small
 
-res0 = np.load('results/result_GPU_40_1090_0.npy')
-res1 = np.load('results/result_GPU_40_1090_1.npy')
-res2 = np.load('results/result_GPU_40_1090_2.npy')
+res0 = np.load('results/result_GPU_12_1090_0.npy')
+res1 = np.load('results/result_GPU_12_1090_1.npy')
+res2 = np.load('results/result_GPU_12_1090_2.npy')
 
 res = np.array([res0, res1, res2])
 
@@ -156,15 +156,35 @@ print("Image 2: ", np.mean(np.array(diff2_mvs)))
 #Mean squared error of reprojections into the original depth maps
 for i in range(NUMBER_OF_IMAGES):
 
+    squared_error_orig_1 = (RGBDD[i,1,:,:] - RGBDD[i,6,:,:]) ** 2
+    mask1 = (squared_error_orig_1 <= 1).float()
+    squared_error_orig_2 = (RGBDD[i,1,:,:] - RGBDD[i,11,:,:]) ** 2
+    mask2 = (squared_error_orig_2 <= 1).float()
+
+
     mse_orig = mean_squared_error(RGBDD[i,1,:,:], RGBDD[i,6,:,:]) + mean_squared_error(RGBDD[i,1,:,:], RGBDD[i,11,:,:])
     mse_orig = mse_orig/2
+
+    mse_orig_no_out = mean_squared_error(RGBDD[i, 1, :, :]*mask1, RGBDD[i, 6, :, :]*mask1) + mean_squared_error(RGBDD[i, 1, :, :]*mask2,RGBDD[i, 11, :, :]*mask2)
+    mse_orig_no_out = mse_orig_no_out / 2
+
+    squared_error_orig_1 = (torch.tensor(res[i,:,:]) - RGBDD[i, 6, :, :]) ** 2
+    mask1 = (squared_error_orig_1 <= 1).float()
+    squared_error_orig_2 = (torch.tensor(res[i,:,:]) - RGBDD[i, 11, :, :]) ** 2
+    mask2 = (squared_error_orig_2 <= 1).float()
 
     mse_res = mean_squared_error(res[i,:,:], RGBDD[i,6,:,:]) + mean_squared_error(res[i,:,:], RGBDD[i,11,:,:])
     mse_res = mse_res/2
 
+    mse_res_no_out = mean_squared_error(torch.tensor(res[i, :, :])*mask1, RGBDD[i, 6, :, :]*mask1) + mean_squared_error(torch.tensor(res[i, :, :])*mask2, RGBDD[i, 11, :, :]*mask2)
+    mse_res_no_out = mse_res_no_out / 2
+
     print("Mean squared error for image %d:" % i)
     print("Original: ", mse_orig)
+    print("Original (no outliers): ", mse_orig_no_out)
     print("Result: ", mse_res)
+    print("Result (no outliers): ", mse_res_no_out)
+    print("\n")
 
 """
 fig, ax = plt.subplots()
@@ -176,10 +196,11 @@ im = plt.imshow(RGBDD[0,7,:,:], interpolation='nearest')
 fig.colorbar(im, ax=ax, label='Interactive colorbar')
 plt.show()
 """
-print()
+print("\n\n")
 #Mean squared error of reprojections into the generated depth maps
 x, y = np.meshgrid(np.arange(0.5, NEW_WIDTH + 0.5), np.arange(0.5, NEW_HEIGHT + 0.5))
 output_reprojections_loss = 0
+output_reprojections_loss_no_out = 0
 cam_params = extrinsics[0]
 for i in range(len(outputs)):
     for j in range(len(outputs)):
@@ -195,10 +216,16 @@ for i in range(len(outputs)):
             orig = outputs[j][0, 0, :, :]
             generated = ref_from_src_depth_ios[0, 0, :, :]
 
+            squared_error = (orig - generated) ** 2
+            mask2 = (squared_error <= 1).float()
+
             mask = (generated != 0).float()  # find relevant (nonzero) values
             criterion = torch.nn.MSELoss()
-            loss = criterion(orig * mask, generated * mask)
 
+            loss2 = criterion(orig * mask * mask2, generated * mask * mask2)
+            output_reprojections_loss_no_out += loss2
+
+            loss = criterion(orig * mask, generated * mask)
             output_reprojections_loss += loss
             """
             fig, ax = plt.subplots()
@@ -212,9 +239,11 @@ for i in range(len(outputs)):
             plt.title("Generated")
             plt.show()
             """
-    print("The output reprojections loss for generated is", output_reprojections_loss," for image ",i, "!!!dělit 2!!!")
+    print("The output reprojections loss for generated is", output_reprojections_loss/2," for image ",i)
+    print("The output reprojections loss (no outlier) for generated is", output_reprojections_loss_no_out/2, " for image ", i)
 
-
+output_reprojections_loss = 0
+output_reprojections_loss_no_out = 0
 for i in range(len(outputs)):
     for j in range(len(outputs)):
         if i != j:
@@ -229,10 +258,16 @@ for i in range(len(outputs)):
             orig = RGBDD[j, 1, :, :]
             generated = ref_from_src_depth_ios[0, 0, :, :]
 
+            squared_error = (orig - generated) ** 2
+            mask2 = (squared_error <= 1).float()
+
             mask = (generated != 0).float()  # find relevant (nonzero) values
             criterion = torch.nn.MSELoss()
-            loss = criterion(orig * mask, generated * mask)
 
+            loss2 = criterion(orig * mask * mask2, generated * mask * mask2)
+            output_reprojections_loss_no_out += loss2
+
+            loss = criterion(orig * mask, generated * mask)
             output_reprojections_loss += loss
             """
             fig, ax = plt.subplots()
@@ -247,7 +282,8 @@ for i in range(len(outputs)):
             plt.show()
             """
 
-    print("The output reprojections loss for original is",output_reprojections_loss, " for image ",i, "!!!dělit 2!!!")
+    print("The output reprojections loss for original is",output_reprojections_loss/2, " for image ",i)
+    print("The output reprojections loss no outliers for original is", output_reprojections_loss_no_out/2, " for image ", i)
 
 print("\n\n")
 #SSIM
